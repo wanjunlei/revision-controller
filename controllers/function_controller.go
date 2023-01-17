@@ -50,14 +50,22 @@ type FunctionReconciler struct {
 	client.Client
 	log logr.Logger
 
+<<<<<<< HEAD
 	revisionControllers map[string]revisioncontroller.RevisionController
+=======
+	revisionControllers map[string]revision.RevisionController
+>>>>>>> resolve conversation
 }
 
 func NewFunctionReconciler(mgr manager.Manager) *FunctionReconciler {
 	r := &FunctionReconciler{
 		Client:              mgr.GetClient(),
 		log:                 ctrl.Log.WithName("controllers").WithName("Function"),
+<<<<<<< HEAD
 		revisionControllers: make(map[string]revisioncontroller.RevisionController),
+=======
+		revisionControllers: make(map[string]revision.RevisionController),
+>>>>>>> resolve conversation
 	}
 
 	return r
@@ -103,7 +111,11 @@ func (r *FunctionReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 }
 
 func (r *FunctionReconciler) addRevisionController(fn *openfunction.Function) error {
+<<<<<<< HEAD
 	config, err := getRevisionControllerConfig(fn.Annotations[revisionControllerParamsKey])
+=======
+	config, err := getRevisionControllerConfig(fn.Annotations[revisionParamsKey])
+>>>>>>> resolve conversation
 	if err != nil {
 		return err
 	}
@@ -114,33 +126,54 @@ func (r *FunctionReconciler) addRevisionController(fn *openfunction.Function) er
 	switch revisionControllerType {
 	case constants.RevisionControllerTypeSource:
 		if fn.Spec.Build == nil {
+<<<<<<< HEAD
 			r.deleteRevisionController(fn, revisionControllerType)
+=======
+			r.deleteRevisionController(fn, revisionType)
+>>>>>>> resolve conversation
 			return nil
 		}
 
 		if fn.Spec.Build.SrcRepo.Revision != nil {
 			if commitShaRegEx.MatchString(*fn.Spec.Build.SrcRepo.Revision) {
+<<<<<<< HEAD
 				r.log.V(1).Info("source code point to a commit, no need to start revision controller")
 				r.deleteRevisionController(fn, revisionControllerType)
+=======
+				r.log.V(1).Info("source code point to a commit, no need to start revision")
+				r.deleteRevisionController(fn, revisionType)
+>>>>>>> resolve conversation
 				return nil
 			}
 		}
 	case constants.RevisionControllerTypeImage:
 		if fn.Spec.Serving == nil {
+<<<<<<< HEAD
 			r.deleteRevisionController(fn, revisionControllerType)
+=======
+			r.deleteRevisionController(fn, revisionType)
+>>>>>>> resolve conversation
 			return nil
 		}
 	default:
 		return fmt.Errorf("unspport revision controller type, %s", revisionControllerType)
 	}
 
+<<<<<<< HEAD
 	key := strings.Join([]string{fn.Namespace, fn.Name, revisionControllerType}, "/")
+=======
+	key := strings.Join([]string{fn.Namespace, fn.Name, revisionType}, "/")
+>>>>>>> resolve conversation
 	rc := r.revisionControllers[key]
 	if rc != nil {
 		return rc.Update(config)
 	}
 
+<<<<<<< HEAD
 	rc, err = newRevisionController(r.Client, fn, revisionControllerType, config)
+=======
+	rc, err = newRevisionController(r.Client, fn, revisionType, config)
+>>>>>>> resolve conversation
 	if err != nil {
 		return err
 	}
@@ -163,8 +196,13 @@ func (r *FunctionReconciler) cleanRevisionControllerByFunction(fn *openfunction.
 	}
 }
 
+<<<<<<< HEAD
 func (r *FunctionReconciler) deleteRevisionController(fn *openfunction.Function, revisionControllerType string) {
 	key := strings.Join([]string{fn.Namespace, fn.Name, revisionControllerType}, "/")
+=======
+func (r *FunctionReconciler) deleteRevisionController(fn *openfunction.Function, revisionType string) {
+	key := strings.Join([]string{fn.Namespace, fn.Name, revisionType}, "/")
+>>>>>>> resolve conversation
 	if rc, ok := r.revisionControllers[key]; ok {
 		rc.Stop()
 		delete(r.revisionControllers, key)
@@ -184,12 +222,21 @@ func getRevisionControllerConfig(params string) (map[string]string, error) {
 	return config, nil
 }
 
+<<<<<<< HEAD
 func newRevisionController(c client.Client, fn *openfunction.Function, revisionControllerType string, config map[string]string) (revisioncontroller.RevisionController, error) {
 	switch revisionControllerType {
 	case constants.RevisionControllerTypeSource:
 		return git.NewRevisionController(c, fn, revisionControllerType, config)
 	case constants.RevisionControllerTypeImage:
 		return image.NewRevisionController(c, fn, revisionControllerType, config)
+=======
+func newRevisionController(c client.Client, fn *openfunction.Function, revisionType string, config map[string]string) (revision.RevisionController, error) {
+	switch revisionType {
+	case constants.RevisionTypeSource:
+		return git.NewRevisionController(c, fn, revisionType, config)
+	case constants.RevisionTypeImage:
+		return image.NewRevisionController(c, fn, revisionType, config)
+>>>>>>> resolve conversation
 	default:
 		return nil, fmt.Errorf("unspported revision controller type, %s", revisionControllerType)
 	}
