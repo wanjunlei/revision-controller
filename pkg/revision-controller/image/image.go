@@ -118,6 +118,7 @@ func (r *RevisionController) Update(config map[string]string) error {
 	}
 
 	r.config = revisionControllerConfig
+	return nil
 }
 
 func (r *RevisionController) Stop() {
