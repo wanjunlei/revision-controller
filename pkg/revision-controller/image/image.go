@@ -152,10 +152,15 @@ func (r *RevisionController) getRevisionControllerConfig(config map[string]strin
 		RevisionControllerType: config[constants.RevisionControllerType],
 		PollingInterval:        interval,
 		imageConfig: imageConfig{
-			image:      function.Spec.Image,
 			insecure:   insecure,
 			credential: function.Spec.ImageCredentials,
 		},
+	}
+
+	if revisionControllerConfig.RevisionControllerType == constants.RevisionControllerTypeImage {
+		revisionControllerConfig.image = function.Spec.Image
+	} else if revisionControllerConfig.RevisionControllerType == constants.RevisionControllerTypeSourceImage {
+		revisionControllerConfig.image = function.Spec.Build.SrcRepo.BundleContainer.Image
 	}
 
 	return revisionControllerConfig, nil
@@ -210,11 +215,21 @@ func (r *RevisionController) getCurrentImageDigest() (string, error) {
 		return "", err
 	}
 
-	if function.Status.Revision == nil {
-		return "", nil
+	if r.config.RevisionControllerType == constants.RevisionControllerTypeImage {
+		if function.Status.Revision == nil {
+			return "", nil
+		}
+
+		return function.Status.Revision.ImageDigest, nil
+	} else if r.config.RevisionControllerType == constants.RevisionControllerTypeSourceImage {
+		for _, source := range function.Status.Sources {
+			if source.Name == "default" && source.Bundle != nil {
+				return source.Bundle.Digest, nil
+			}
+		}
 	}
 
-	return function.Status.Revision.ImageDigest, nil
+	return "", nil
 }
 
 func (r *RevisionController) updateFunctionStatus(digest string) error {
@@ -234,6 +249,14 @@ func (r *RevisionController) updateFunctionStatus(digest string) error {
 		r.log.Info("image changed, rerun serving")
 	case constants.RevisionControllerTypeSourceImage:
 		function.Status.Build = nil
+		function.Status.Sources = nil
+		function.Status.Sources = append(function.Status.Sources, openfunction.SourceResult{
+			Name: "default",
+			Bundle: &openfunction.BundleSourceResult{
+				Digest: digest,
+			},
+		})
+
 		r.log.Info("source image changed, rebuild function")
 	}
 
