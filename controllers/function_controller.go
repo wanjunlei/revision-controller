@@ -118,12 +118,29 @@ func (r *FunctionReconciler) addRevisionController(fn *openfunction.Function) er
 			return nil
 		}
 
+		if fn.Spec.Build.SrcRepo.Url == "" {
+			r.log.V(1).Info("git url must be set for source revision controller")
+			r.deleteRevisionController(fn, revisionControllerType)
+			return nil
+		}
+
 		if fn.Spec.Build.SrcRepo.Revision != nil {
 			if commitShaRegEx.MatchString(*fn.Spec.Build.SrcRepo.Revision) {
 				r.log.V(1).Info("source code point to a commit, no need to start revision controller")
 				r.deleteRevisionController(fn, revisionControllerType)
 				return nil
 			}
+		}
+	case constants.RevisionControllerTypeSourceImage:
+		if fn.Spec.Build == nil {
+			r.deleteRevisionController(fn, revisionControllerType)
+			return nil
+		}
+
+		if fn.Spec.Build.SrcRepo.BundleContainer == nil {
+			r.log.V(1).Info("bundle container must be set for source image revision controller")
+			r.deleteRevisionController(fn, revisionControllerType)
+			return nil
 		}
 	case constants.RevisionControllerTypeImage:
 		if fn.Spec.Serving == nil {
@@ -188,7 +205,7 @@ func newRevisionController(c client.Client, fn *openfunction.Function, revisionC
 	switch revisionControllerType {
 	case constants.RevisionControllerTypeSource:
 		return git.NewRevisionController(c, fn, revisionControllerType, config)
-	case constants.RevisionControllerTypeImage:
+	case constants.RevisionControllerTypeSourceImage, constants.RevisionControllerTypeImage:
 		return image.NewRevisionController(c, fn, revisionControllerType, config)
 	default:
 		return nil, fmt.Errorf("unspported revision controller type, %s", revisionControllerType)
