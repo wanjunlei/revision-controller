@@ -138,7 +138,7 @@ spec:
             - --zap-log-level=info
           command:
             - /revision-controller
-          image: openfunction/revision-controller:latest
+          image: openfunction/revision-controller:v1.0.0
           livenessProbe:
             httpGet:
               path: /healthz
