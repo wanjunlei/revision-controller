@@ -24,11 +24,7 @@ on:
       - 'v*'
     paths:
       - '.github/workflows/**'
-      - 'apis/**'
-      - 'config/bundle.yaml'
       - 'controllers/**'
-      - 'hack/delete.sh'
-      - 'hack/deploy.sh'
       - 'pkg/**'
       - 'Dockerfile'
       - 'main.go'
